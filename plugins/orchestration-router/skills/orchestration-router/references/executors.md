@@ -12,7 +12,9 @@ Read-only is a tool boundary, not a worker name. Children may not share the pare
 
 ### Claude Code `Agent` tool (observed 2026-10-21, cloud session)
 
-- Per call: `model` alias (`haiku`, `sonnet`, `opus`), `effort`, `run_in_background`, optional `isolation: "worktree"`. The child starts without the parent's conversation: write the packet to a file and pass its path, or inline it.
+- Per call: `model` alias (`haiku`, `sonnet`, `opus`), `effort`, `run_in_background`, optional `isolation: "worktree"`. A regular (non-fork) child starts without the parent's conversation: write the packet to a file and pass its path, or inline it.
+- Exception: `subagent_type: "fork"` inherits the whole parent conversation and runs on the parent's model; a `model` override is ignored. Do not use a fork when the packet sets the model or limits what context the worker may see.
+- `isolation: "worktree"` may create the worktree from the repository's default branch, not from the parent's `HEAD`. When the packet's base revision is another branch or commit, the packet must tell the worker to check out that revision and confirm `git rev-parse HEAD` before work; otherwise do not isolate.
 - Completion arrives as a notification with the child's final text. The runtime does not report which model actually served the child: record `actual.model` as unknown. A child's own claim about its model is self-reported, not evidence.
 - Without `isolation: "worktree"` the child shares the parent's working tree and checked-out branch. Until it returns, the coordinator must not switch branches, edit, build or run tests in that checkout; do independent work in another clone or directory.
 - In a cloud container `discover.py` may also find a `claude` CLI. It is unauthenticated or bills the same subscription pool, so prefer the native tool there instead of probing the CLI.
