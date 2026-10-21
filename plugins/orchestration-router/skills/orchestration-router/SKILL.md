@@ -79,7 +79,7 @@ Inspect artifacts, not reports. Check write scope against the packet (`git diff 
 
 ## 8. Ledger and recovery
 
-Keep the ledger in the project's checkpoint location, shaped like [ledger.example.json](assets/ledger.example.json). States: queued → reserved → running → review → done, plus blocked and cancelled. Dispatch is not done.
+Keep the ledger in the project's checkpoint location, shaped like [ledger.example.json](assets/ledger.example.json). On an ephemeral host (a cloud container that is reclaimed after the session) put the ledger and packets in storage that outlives it, such as a shared project folder or the coordination files of the repository, never only in the container. States: queued → reserved → running → review → done, plus blocked and cancelled. Dispatch is not done.
 
 One evidence-informed retry after a reasoning failure; then decompose, move to a stronger eligible route, or report a specific blocker. On a rate limit, stop spawning on that pool, preserve work, continue independent tasks elsewhere.
 

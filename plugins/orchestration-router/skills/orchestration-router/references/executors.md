@@ -10,6 +10,13 @@ Use the host's actual spawn tool, model/effort options and concurrency limits. O
 
 Read-only is a tool boundary, not a worker name. Children may not share the parent's tools, sign-ins or skills: pass exact paths, instructions and context.
 
+### Claude Code `Agent` tool (observed 2026-10-21, cloud session)
+
+- Per call: `model` alias (`haiku`, `sonnet`, `opus`), `effort`, `run_in_background`, optional `isolation: "worktree"`. The child starts without the parent's conversation: write the packet to a file and pass its path, or inline it.
+- Completion arrives as a notification with the child's final text. The runtime does not report which model actually served the child: record `actual.model` as unknown. A child's own claim about its model is self-reported, not evidence.
+- Without `isolation: "worktree"` the child shares the parent's working tree and checked-out branch. Until it returns, the coordinator must not switch branches, edit, build or run tests in that checkout; do independent work in another clone or directory.
+- In a cloud container `discover.py` may also find a `claude` CLI. It is unauthenticated or bills the same subscription pool, so prefer the native tool there instead of probing the CLI.
+
 ## Route by capability first
 
 Some tools exist in only one executor. Send the packet where the tool is, then pick the model inside that executor:
