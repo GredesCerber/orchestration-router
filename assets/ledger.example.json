@@ -1,0 +1,49 @@
+{
+  "note": "Synthetic example of the coordinator's ledger. Keep the real one in the project's checkpoint location, not in this skill. 'done' and 'active' feed plan_wave.py directly.",
+  "updated_at": "2026-01-01T00:00:00+00:00",
+  "allocation_preference": {
+    "text": "example: prefer Claude for complete implementation stages until weekly reset",
+    "source": "user message",
+    "recorded_at": "2026-01-01T00:00:00+00:00"
+  },
+  "usage_snapshots": [
+    {
+      "pool": "claude-subscription",
+      "source": "statusline snapshot file",
+      "checked_at": "2026-01-01T00:00:00+00:00",
+      "freshness": "current",
+      "windows": [
+        {"label": "5h", "used_percent": null, "remaining_percent": null, "resets_at": null},
+        {"label": "7d", "used_percent": null, "remaining_percent": null, "resets_at": null}
+      ],
+      "blocked": null
+    }
+  ],
+  "done": ["inspect-ui"],
+  "active": [
+    {
+      "id": "fix-ui",
+      "workspace": "wt-fix-ui",
+      "reads": ["client"],
+      "writes": ["client/src/nav"],
+      "locks": ["port:5174"],
+      "session": "recorded-session-id",
+      "pid": null
+    }
+  ],
+  "tasks": [
+    {
+      "id": "fix-ui",
+      "state": "running",
+      "owner": "selected-claude",
+      "depends_on": ["inspect-ui"],
+      "requested": {"model": "sonnet", "effort": "medium"},
+      "actual": {"model": null, "effort": null},
+      "packet": "work/orchestration/fix-ui/packet.txt",
+      "log": "work/orchestration/fix-ui/run.log",
+      "retries": 0,
+      "evidence": [],
+      "next": "accept: diff within client/src/nav, e2e nav test passes"
+    }
+  ]
+}

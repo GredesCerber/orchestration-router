@@ -1,0 +1,4 @@
+interface:
+  display_name: "Оркестрация и роутер моделей"
+  short_description: "Распределение задач между субагентами, Claude Code и Codex"
+  default_prompt: "Используй $orchestration-router: найди доступных исполнителей, проверь лимиты, выбери модели и организуй работу над проектом."

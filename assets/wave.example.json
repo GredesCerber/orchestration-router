@@ -1,0 +1,100 @@
+{
+  "note": "Synthetic disabled example. Populate candidates from live discovery and replace task scopes before execution.",
+  "profile": "balanced",
+  "max_workers": 3,
+  "runtime_worker_slots": 3,
+  "allowed_engines": [
+    "codex-native",
+    "claude-code"
+  ],
+  "done": [],
+  "active": [],
+  "candidates": [
+    {
+      "id": "selected-gpt",
+      "engine": "codex-native",
+      "model": null,
+      "enabled": false,
+      "authorized": false,
+      "status": "unknown",
+      "evidence": null,
+      "tier": 2,
+      "cost_rank": null,
+      "capabilities": [
+        "code",
+        "read",
+        "write"
+      ],
+      "efforts": [],
+      "allowed_data_classes": [],
+      "pool": "codex-subscription"
+    },
+    {
+      "id": "selected-claude",
+      "engine": "claude-code",
+      "model": null,
+      "enabled": false,
+      "authorized": false,
+      "status": "unknown",
+      "evidence": null,
+      "tier": 3,
+      "cost_rank": null,
+      "capabilities": [
+        "code",
+        "read",
+        "write"
+      ],
+      "efforts": [],
+      "allowed_data_classes": [],
+      "pool": "claude-subscription"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "inspect-ui",
+      "mode": "read",
+      "workspace": "main",
+      "tier": 1,
+      "risk": "low",
+      "reads": [
+        "client"
+      ],
+      "writes": [],
+      "locks": [],
+      "depends_on": [],
+      "required_capabilities": [
+        "read"
+      ],
+      "data_class": "project-private",
+      "acceptance": [
+        "Return concrete navigation defects with file references, without edits."
+      ]
+    },
+    {
+      "id": "fix-ui",
+      "mode": "write",
+      "workspace": "main",
+      "tier": 2,
+      "risk": "medium",
+      "reads": [
+        "client"
+      ],
+      "writes": [
+        "client"
+      ],
+      "locks": [],
+      "depends_on": [
+        "inspect-ui"
+      ],
+      "required_capabilities": [
+        "code",
+        "write"
+      ],
+      "data_class": "project-private",
+      "acceptance": [
+        "Fix confirmed findings and demonstrate the affected flow."
+      ]
+    }
+  ],
+  "exhausted_pools": []
+}
