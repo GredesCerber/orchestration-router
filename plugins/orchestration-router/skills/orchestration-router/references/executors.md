@@ -23,30 +23,24 @@ Some tools exist in only one executor. Send the packet where the tool is, then p
 
 A feature flag or an installed plugin proves the tool exists, not that it works headless or that its account is connected. The first use of a capability through a CLI is a small probe; record the result in the inventory. An app that needs sign-in or consent cannot get it in a background run: return a blocker instead.
 
-## Launching a CLI worker (any CLI, Windows PowerShell)
+## Launching a CLI worker (any OS)
 
-Run each worker in the background with its own folder, the prompt in a UTF-8 file, and logs on disk:
+Use `scripts/launch.py`. It passes arguments as a list (no shell quoting, same on Windows, macOS and Linux), feeds the packet on stdin from a UTF-8 file, detaches the child, and writes `run.json`, `events.jsonl` and `stderr.txt` into the run folder. It cannot emit permission-bypass flags.
 
-```powershell
-$run = "<project>\work\orchestration\<task-id>"   # absolute path from the packet
-New-Item -ItemType Directory -Force $run | Out-Null
-# packet.txt: assets/packet.md filled in, saved as UTF-8
-$cliArgs = @(<flags from the adapter below>)
-# Start-Process splits array elements on spaces (checked on PowerShell 7.6), so quote each one.
-# Valid only while no element contains a double quote.
-$argLine = ($cliArgs | ForEach-Object { '"' + $_ + '"' }) -join ' '
-$p = Start-Process <claude|codex> -ArgumentList $argLine -WorkingDirectory '<repo>' -NoNewWindow -PassThru `
-     -RedirectStandardInput "$run\packet.txt" -RedirectStandardOutput "$run\events.jsonl" `
-     -RedirectStandardError "$run\stderr.txt"
-$p.Id   # record in the ledger before doing anything else
+```text
+python -B <skill-dir>/scripts/launch.py start --engine claude|codex --role read|write     --task-id <id> --run-dir <project>/work/orchestration/<id> --cwd <repo>     --packet <run-dir>/packet.txt [--model <m>] [--effort <e>]     [--allow-tool "Bash(npm test:*)"] [--worktree] [--add-dir <dir>] [--dry-run]
+python -B <skill-dir>/scripts/launch.py status --run-dir <run-dir>
 ```
 
-- Poll with bounded waits: `Get-Process -Id <pid>`, the tail of `events.jsonl`, `git diff --name-only` in the worker's workspace.
-- Never interpolate untrusted text into the argument list; it goes in `packet.txt`. Do not name the array `$args` (PowerShell automatic variable).
-- Garbled Cyrillic is console encoding: keep prompts in UTF-8 files and set `[Console]::OutputEncoding = [Text.UTF8Encoding]::new()` in the launching shell.
-- On macOS/Linux the same flags apply; use `nohup <cli> ... < packet.txt > events.jsonl 2> stderr.txt &` and record `$!`.
-- A child inherits the parent's environment. Do not put secrets in the packet; prefer a minimal environment when the CLI supports it.
-- A timeout does not prove the child exited. Reconcile process tree and diff before retry or replacement. Never kill unrelated or user processes.
+`start` prints the PID: record it in the ledger before anything else. `status` reports whether the process is alive, the session/thread ID, final text, usage, errors, the stderr tail and, for Codex, files in its `generated_images/<thread_id>/` folder. Use `--dry-run` to see the exact command line.
+
+Verified 2026-10-21 on Windows (PowerShell host, Python 3): one tiny read-only run each of `claude` (haiku, low) and `codex` (lightweight model, low) started, finished and returned their answer and session IDs through `status`. macOS/Linux use the same code path (`start_new_session`) but were not run.
+
+- Poll with bounded waits: `status`, plus `git diff --name-only` in the worker's workspace.
+- Never put untrusted text into arguments; it belongs in the packet file.
+- A child inherits the parent's environment. Do not put secrets in the packet.
+- A timeout does not prove the child exited: `status` must show `running: false` before retry or replacement. Never kill unrelated or user processes.
+- If you launch by hand instead, pass arguments as an array through your language's process API, not through a shell string. (PowerShell's `Start-Process -ArgumentList` splits elements on spaces.)
 
 ## Claude Code
 
@@ -62,7 +56,7 @@ Installation is not authentication or quota. Claude Code in print mode (`-p`) is
 | Implementer in its scope | `--permission-mode acceptEdits --allowedTools "Bash(npm test:*) Bash(git diff:*) Bash(git status:*)"` (the project's real build/test commands) |
 | Isolated writer | add `--worktree <task-id>` when worktrees are allowed and no shared runtime folder is involved |
 
-Base flags: `-p --model <alias> --effort <level> --output-format stream-json --verbose --name <task-id>`. For a short single-shot task use `--output-format json`. `--json-schema '<schema>'` can enforce the handoff fields. The final `result` event holds `session_id`, usage and the final text.
+`launch.py` builds: `-p --output-format stream-json --verbose --name <task-id> --model <alias> --effort <level>` plus the role flags above. (`--json-schema '<schema>'` can enforce the handoff fields; `launch.py` does not add it.) The final `result` event holds `session_id`, usage and the final text.
 
 - Never `--dangerously-skip-permissions` / `bypassPermissions`. `--add-dir` only for directories the packet owns.
 - Resume only by recorded ID (`--resume <session-id>`), never concurrently, never "latest".
@@ -70,13 +64,11 @@ Base flags: `-p --model <alias> --effort <level> --output-format stream-json --v
 - Model resolution: aliases are not exact versions; `CLAUDE_CODE_SUBAGENT_MODEL`, `CLAUDE_CODE_EFFORT_LEVEL` and managed settings can override requests. Do not change them globally. Supported effort is model-specific.
 - Nested workers: give an explicit allowance and count them in the project cap; a prompt cap is advisory. `--max-budget-usd` bounds API spend only, not subscription quota.
 
-The full `claude -p` launch was not run while writing this recipe (paid run); do one short trivial packet first.
-
 ## Codex CLI
 
 Flags from `codex exec --help` of codex-cli 0.156.1; recheck on the installed version.
 
-Base flags: `exec --json -o <run>\last.txt -C <repo> -m <model> -c model_reasoning_effort="<level>"`. With `--json`, stdout is JSONL events: `thread.started` carries `thread_id`, `turn.completed` carries token usage, `agent_message` items carry the text. `-o` writes the final message to a file. `--output-schema <file>` can enforce the handoff fields.
+`launch.py` builds: `exec --json -o <run-dir>/last.txt -C <repo> -s <sandbox> -m <model> -c model_reasoning_effort="<level>" -` (prompt from stdin; `--skip-git-repo-check` outside Git). With `--json`, stdout is JSONL events: `thread.started` carries `thread_id`, `turn.completed` carries token usage, `agent_message` items carry the text. `-o` writes the final message to a file. `--output-schema <file>` can enforce the handoff fields.
 
 | Role | Flags |
 |---|---|

@@ -1,0 +1,17 @@
+{
+  "name": "gredescerber",
+  "owner": {
+    "name": "GredesCerber",
+    "url": "https://github.com/GredesCerber"
+  },
+  "description": "GredesCerber's agent plugins: orchestration across subagents, Claude Code and Codex.",
+  "plugins": [
+    {
+      "name": "orchestration-router",
+      "source": "./plugins/orchestration-router",
+      "description": "Host-neutral orchestration for Codex, Claude Code and other agents: discover executors, route by capability, pick model and effort, check usage limits, launch and collect CLI workers, keep file ownership, accept results.",
+      "version": "0.2.0",
+      "category": "productivity"
+    }
+  ]
+}

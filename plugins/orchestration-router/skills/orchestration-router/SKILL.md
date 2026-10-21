@@ -1,11 +1,11 @@
 ---
 name: orchestration-router
-description: Coordinate substantial project work across whatever agents are available — native subagents, Claude Code CLI, Codex CLI, user-authorized APIs — from any host (Codex, Claude Code or another harness). Discover executors, route by capability (e.g. image generation in Codex), select models and effort, check remaining usage, schedule independent tasks, preserve file/session ownership, integrate verified results. Use for explicit orchestration, multi-model routing, delegating to Claude or Codex, or a large backlog (also in Russian: оркестрация, распредели работу, субагенты, отдай Claude, отдай Codex, лимиты, роутинг моделей); keep small dependent tasks in the main agent.
+description: "Coordinate substantial project work across whatever agents are available — native subagents, Claude Code CLI, Codex CLI, user-authorized APIs — from any host (Codex, Claude Code or another harness). Discover executors, route by capability (e.g. image generation in Codex), select models and effort, check remaining usage, schedule independent tasks, preserve file/session ownership, integrate verified results. Use for explicit orchestration, multi-model routing, delegating to Claude or Codex, or a large backlog (also in Russian: оркестрация, распредели работу, субагенты, отдай Claude, отдай Codex, лимиты, роутинг моделей); keep small dependent tasks in the main agent."
 ---
 
 # Orchestration Router
 
-Act as one accountable coordinator. Finish the user's deliverable; do not optimize for agent count. This skill is an operational router, not an API gateway: its scripts make no model calls and hold no locks. It is host-neutral: whichever agent loaded it is the coordinator, and every other agent CLI is an executor.
+Act as one accountable coordinator. Finish the user's deliverable; do not optimize for agent count. This skill is an operational router, not an API gateway: only `launch.py start` runs a model; no script holds locks or enforces budgets. It is host-neutral: whichever agent loaded it is the coordinator, and every other agent CLI is an executor.
 
 ## Precedence
 
@@ -67,7 +67,7 @@ It proposes the next wave only. Recheck live state before dispatch.
 
 ## 6. Delegate
 
-Fill [packet.md](assets/packet.md) for every delegated task. For a cohesive substantial stage, give one capable executor the whole loop (inspect, implement, build/test, repair) with the tools it needs; keep reviewers read-only. Send compact context, not a chat fork. Do not tell a reviewer the desired conclusion.
+Fill [packet.md](assets/packet.md) for every delegated task. Start CLI workers with `scripts/launch.py` (same on every OS; see [executors.md](references/executors.md)) and follow them with its `status` command. For a cohesive substantial stage, give one capable executor the whole loop (inspect, implement, build/test, repair) with the tools it needs; keep reviewers read-only. Send compact context, not a chat fork. Do not tell a reviewer the desired conclusion.
 
 Require the return in [handoff.md](assets/handoff.md) form.
 

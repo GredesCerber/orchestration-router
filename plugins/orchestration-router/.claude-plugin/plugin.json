@@ -1,0 +1,10 @@
+{
+  "name": "orchestration-router",
+  "version": "0.2.0",
+  "description": "Host-neutral orchestration for Codex, Claude Code and other agents: discover executors, route by capability, pick model and effort, check usage limits, launch and collect CLI workers, keep file ownership, accept results.",
+  "author": {"name": "GredesCerber", "url": "https://github.com/GredesCerber"},
+  "homepage": "https://github.com/GredesCerber/orchestration-router",
+  "repository": "https://github.com/GredesCerber/orchestration-router",
+  "license": "MIT",
+  "keywords": ["orchestration", "subagents", "claude-code", "codex", "routing", "usage-limits"]
+}

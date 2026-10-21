@@ -1,0 +1,12 @@
+{
+  "name": "gredescerber",
+  "interface": {"displayName": "GredesCerber"},
+  "plugins": [
+    {
+      "name": "orchestration-router",
+      "source": {"source": "local", "path": "./plugins/orchestration-router"},
+      "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+      "category": "Productivity"
+    }
+  ]
+}

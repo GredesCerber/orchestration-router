@@ -18,13 +18,13 @@
 Codex:
 
 ```bash
-git clone https://github.com/GredesCerber/orchestration-router ~/.codex/skills/orchestration-router
+codex plugin marketplace add GredesCerber/orchestration-router   # then install orchestration-router from the Codex plugins UI
 ```
 
 Claude Code:
 
 ```bash
-git clone https://github.com/GredesCerber/orchestration-router ~/.claude/skills/orchestration-router
+/plugin install orchestration-router --marketplace GredesCerber/orchestration-router
 ```
 
 Если нужны обе среды, держите одну копию и подключите вторую ссылкой. В Windows это делается через junction: `New-Item -ItemType Junction -Path $HOME\.claude\skills\orchestration-router -Target $HOME\.codex\skills\orchestration-router`.
