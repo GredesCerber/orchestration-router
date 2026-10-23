@@ -4,6 +4,7 @@
                    --cwd REPO --packet FILE [--model M] [--effort E] [--allow-tool T ...]
                    [--worktree] [--add-dir D ...] [--dry-run]
   launch.py status --run-dir DIR
+  launch.py wait   --run-dir DIR [--timeout SECONDS] [--interval SECONDS]
 
 Arguments go to the child as a list (no shell, no quoting rules per OS). The packet is fed
 on stdin from a UTF-8 file. Logs and run.json land in --run-dir. Permission-bypass flags
@@ -15,6 +16,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -150,8 +152,7 @@ def summarize(engine, events_path, run_dir):
     return info
 
 
-def status(a):
-    run_dir = Path(a.run_dir).resolve()
+def collect(run_dir):
     record = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
     running = bool(record.get("pid")) and alive(record["pid"])
     result = {"task_id": record["task_id"], "pid": record.get("pid"), "running": running,
@@ -159,8 +160,25 @@ def status(a):
     err = run_dir / "stderr.txt"
     if err.exists():
         result["stderr_tail"] = err.read_text(encoding="utf-8", errors="replace")[-1500:]
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return result
+
+
+def status(a):
+    print(json.dumps(collect(Path(a.run_dir).resolve()), ensure_ascii=False, indent=2))
     return 0
+
+
+def wait(a):
+    """Block until the worker exits or --timeout passes; exit 0 when done, 3 on timeout."""
+    run_dir = Path(a.run_dir).resolve()
+    deadline = time.monotonic() + a.timeout
+    result = collect(run_dir)
+    while result["running"] and time.monotonic() < deadline:
+        time.sleep(min(a.interval, max(0.0, deadline - time.monotonic())))
+        result = collect(run_dir)
+    result["timed_out"] = result["running"]
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 3 if result["timed_out"] else 0
 
 
 def main(argv=None):
@@ -182,8 +200,16 @@ def main(argv=None):
     s.add_argument("--dry-run", action="store_true")
     st = sub.add_parser("status")
     st.add_argument("--run-dir", required=True)
+    w = sub.add_parser("wait")
+    w.add_argument("--run-dir", required=True)
+    w.add_argument("--timeout", type=float, default=3600, help="seconds (default 3600)")
+    w.add_argument("--interval", type=float, default=20, help="seconds between checks (default 20)")
     a = p.parse_args(argv)
-    return start(a) if a.cmd == "start" else status(a)
+    # Workers answer in any language; a cp1251/cp437 console must not crash the report.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    return {"start": start, "status": status, "wait": wait}[a.cmd](a)
 
 
 if __name__ == "__main__":

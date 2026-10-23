@@ -30,9 +30,12 @@ Use `scripts/launch.py`. It passes arguments as a list (no shell quoting, same o
 ```text
 python -B <skill-dir>/scripts/launch.py start --engine claude|codex --role read|write     --task-id <id> --run-dir <project>/work/orchestration/<id> --cwd <repo>     --packet <run-dir>/packet.txt [--model <m>] [--effort <e>]     [--allow-tool "Bash(npm test:*)"] [--worktree] [--add-dir <dir>] [--dry-run]
 python -B <skill-dir>/scripts/launch.py status --run-dir <run-dir>
+python -B <skill-dir>/scripts/launch.py wait --run-dir <run-dir> [--timeout 3600] [--interval 20]
 ```
 
-`start` prints the PID: record it in the ledger before anything else. `status` reports whether the process is alive, the session/thread ID, final text, usage, errors, the stderr tail and, for Codex, files in its `generated_images/<thread_id>/` folder. Use `--dry-run` to see the exact command line.
+`start` prints the PID: record it in the ledger before anything else. `status` reports whether the process is alive, the session/thread ID, final text, usage, errors, the stderr tail and, for Codex, files in its `generated_images/<thread_id>/` folder. `wait` blocks until the worker exits (exit code 0) or the timeout passes (exit code 3, `"timed_out": true`) and then prints the same report: run it as one background command instead of a hand-written shell polling loop. Use `--dry-run` to see the exact command line.
+
+Output is always UTF-8. Do not grep the report for `"running": false` in a shell loop: when the report could not be printed, such a loop never ends and the next step never starts. Use `wait`, or parse the JSON.
 
 Verified 2026-10-21 on Windows (PowerShell host, Python 3): one tiny read-only run each of `claude` (haiku, low) and `codex` (lightweight model, low) started, finished and returned their answer and session IDs through `status`. macOS/Linux use the same code path (`start_new_session`) but were not run.
 
@@ -81,6 +84,7 @@ Flags from `codex exec --help` of codex-cli 0.156.1; recheck on the installed ve
 - Never `--dangerously-bypass-approvals-and-sandbox` or `--dangerously-bypass-hook-trust`.
 - Resume only by recorded ID: `codex exec resume <thread-id>`, never `--last`, never concurrently.
 - Effort values depend on the model and account; read them from the inventory, not from this file.
+- The `model` in `~/.codex/config.toml` (the desktop app's choice) may be refused by the CLI: on 2026-10-23 `gpt-6.1-sol` failed at once with "model is not supported when using Codex with a ChatGPT account". The models the account offers are the `slug`s in `~/.codex/models_cache.json` (visibility `list`); pass one with `--model` and record it in the inventory.
 - `codex exec review` runs a non-interactive code review of the current repository: a cheap independent reviewer.
 
 ### Images through Codex (verified 2026-10-21)

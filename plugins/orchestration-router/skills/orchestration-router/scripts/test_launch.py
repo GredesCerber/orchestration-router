@@ -48,5 +48,28 @@ class BuildTests(unittest.TestCase):
             self.build(exe=None)
 
 
+class WaitTests(unittest.TestCase):
+    def run_dir(self, final_text):
+        d = Path(tempfile.mkdtemp())
+        (d / "run.json").write_text('{"task_id": "t1", "engine": "codex", "pid": 4242}', encoding="utf-8")
+        (d / "last.txt").write_text(final_text, encoding="utf-8")
+        return d
+
+    def test_returns_when_worker_exits(self):
+        d = self.run_dir("Вызов → Осмысление → Рефлексия")
+        with mock.patch("launch.alive", side_effect=[True, False]), \
+                mock.patch("launch.time.sleep"), mock.patch("builtins.print") as out:
+            code = launch.wait(SimpleNamespace(run_dir=str(d), timeout=60, interval=1))
+        self.assertEqual(code, 0)
+        self.assertIn('"timed_out": false', out.call_args[0][0])
+
+    def test_timeout_reports_running(self):
+        d = self.run_dir("")
+        with mock.patch("launch.alive", return_value=True), mock.patch("launch.time.sleep"), \
+                mock.patch("launch.time.monotonic", side_effect=[0, 0, 100, 100]), \
+                mock.patch("builtins.print"):
+            self.assertEqual(launch.wait(SimpleNamespace(run_dir=str(d), timeout=50, interval=1)), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

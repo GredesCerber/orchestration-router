@@ -262,6 +262,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     args = parser.parse_args()
+    # Task titles may be in any language; a cp1251/cp437 console must not crash the output.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         result = propose(json.loads(args.manifest.read_text(encoding="utf-8-sig")))
     except (ValueError, TypeError, KeyError, OSError) as exc:
