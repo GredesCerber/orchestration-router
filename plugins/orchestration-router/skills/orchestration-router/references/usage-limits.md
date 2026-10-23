@@ -35,6 +35,10 @@ Distinguish plan usage bars from session token/cost estimates. `/cost`/session t
 
 Do not read credential stores, dump environment variables, extract OAuth tokens or call undocumented private quota endpoints. Do not use `/insights` as a cheap quota check: it is analysis work, not an allowance read.
 
+### No quota access (cloud or remote host)
+
+A cloud session usually has no statusline snapshot and no `/usage` screen. Record the pool as `freshness: "unknown"` with empty windows and proceed at the project's worker cap; do not ask the user for numbers unless a routing decision depends on them. A usage-limit error from a child is the signal to stop spawning on that pool.
+
 ## Other selected providers
 
 Use their documented read-only quota/balance tools only when available and authorized. Account balance, requests/tokens per minute, monthly spend cap and subscription percentage are not interchangeable. Do not infer a number of future tasks from a remaining percentage or price estimate.
